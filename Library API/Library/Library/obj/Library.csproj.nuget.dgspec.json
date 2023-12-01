@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\David\\Desktop\\GDSC CRUD\\Library\\Library\\Library.csproj": {}
+    "C:\\Users\\David\\Desktop\\GDSCWorkshop2\\gdsc_.net\\Library API\\Library\\Library\\Library.csproj": {}
   },
   "projects": {
-    "C:\\Users\\David\\Desktop\\GDSC CRUD\\Library\\Library\\Library.csproj": {
+    "C:\\Users\\David\\Desktop\\GDSCWorkshop2\\gdsc_.net\\Library API\\Library\\Library\\Library.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\David\\Desktop\\GDSC CRUD\\Library\\Library\\Library.csproj",
+        "projectUniqueName": "C:\\Users\\David\\Desktop\\GDSCWorkshop2\\gdsc_.net\\Library API\\Library\\Library\\Library.csproj",
         "projectName": "Library",
-        "projectPath": "C:\\Users\\David\\Desktop\\GDSC CRUD\\Library\\Library\\Library.csproj",
+        "projectPath": "C:\\Users\\David\\Desktop\\GDSCWorkshop2\\gdsc_.net\\Library API\\Library\\Library\\Library.csproj",
         "packagesPath": "C:\\Users\\David\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\David\\Desktop\\GDSC CRUD\\Library\\Library\\obj\\",
+        "outputPath": "C:\\Users\\David\\Desktop\\GDSCWorkshop2\\gdsc_.net\\Library API\\Library\\Library\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\David\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -43,6 +43,20 @@
             "Microsoft.AspNetCore.OpenApi": {
               "target": "Package",
               "version": "[7.0.5, )"
+            },
+            "Microsoft.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[7.0.0, )"
+            },
+            "Microsoft.EntityFrameworkCore.Design": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[7.0.0, )"
+            },
+            "Npgsql.EntityFrameworkCore.PostgreSQL": {
+              "target": "Package",
+              "version": "[7.0.0, )"
             },
             "Swashbuckle.AspNetCore": {
               "target": "Package",

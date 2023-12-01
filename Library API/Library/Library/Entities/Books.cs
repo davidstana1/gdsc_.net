@@ -1,6 +1,6 @@
 ﻿namespace Library.Models;
 
-public class Books
+public class Books : Entity
 {
     public string Id { get; set; }
 

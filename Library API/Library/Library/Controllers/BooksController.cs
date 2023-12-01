@@ -1,4 +1,5 @@
 ﻿using Library.Models;
+using Library.Repository;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Library.Controllers;
@@ -8,22 +9,26 @@ namespace Library.Controllers;
 
 public class BooksController : ControllerBase
 {
-  private static readonly List<Books> books_list = new()
-  {
-    Books.Create("Atomic Habits", "James Clear", 256),
-    Books.Create("Deep Work", "Cal Newport", 210)
-  };
+  private readonly AppDbContext _dbContext;
 
+  public BooksController(AppDbContext dbContext)
+  {
+    _dbContext = dbContext;
+  }
+    
   [HttpGet(Name = "GetAllBooks")]
   public ActionResult GetBooks()
   {
-    return Ok(books_list);
+    var books = _dbContext.Set<Books>().ToList();
+    
+    return Ok(books);
   }
 
   [HttpGet("{Id}")]
   public ActionResult GetBooks(string Id)
   {
-    var book = books_list.FirstOrDefault(b => b.Id == Id);
+    var book = _dbContext.BooksEnumerable.Where(booksi => booksi.Id == Id).OrderBy(booksi => booksi.Name)
+      .FirstOrDefault();
 
     if (book is null)
       return NotFound($"Book with ID : {Id} does not exist ! ");
@@ -44,19 +49,23 @@ public class BooksController : ControllerBase
     {
       return BadRequest(e.Message);
     }
-    books_list.Add(book);
-    return Ok(booksRequest);
+
+    _dbContext.Add(book);
+    _dbContext.SaveChanges();
+    
+    return Ok(book);
   }
 
   [HttpDelete("{Id}")]
   public ActionResult DeleteBook(string Id)
   {
-    var book = books_list.FirstOrDefault(b => b.Id == Id);
+    var book = _dbContext.BooksEnumerable.FirstOrDefault(b => b.Id == b.Id);
 
     if (book is null)
       return NotFound($"Book with ID : {Id} does not exist ! ");
 
-    books_list.Remove(book);
+    _dbContext.Remove(book);
+    _dbContext.SaveChanges();
 
     return Ok($"Book with Id : {Id} was removed ! ");
   }
@@ -64,7 +73,7 @@ public class BooksController : ControllerBase
   [HttpPatch("{Id}")]
   public ActionResult ChangeName(string Id, [FromBody] string name)
   {
-    var book = books_list.FirstOrDefault(b => b.Id == Id);
+    var book = _dbContext.BooksEnumerable.FirstOrDefault(b => b.Id == Id);
     
     if (book is null)
       return NotFound($"Book with ID : {Id} does not exist ! ");
@@ -78,13 +87,15 @@ public class BooksController : ControllerBase
       return BadRequest(e.Message);
     }
 
+    _dbContext.SaveChanges();
+    
     return Ok(book);
   }
 
   [HttpPut("{Id}")]
   public ActionResult ChangeBook(string Id, [FromBody] BooksRequest booksRequest)
   {
-    var book = books_list.FirstOrDefault(b => b.Id == Id);
+    var book = _dbContext.BooksEnumerable.FirstOrDefault(b => b.Id == Id);
     
     if (book is null)
       return NotFound($"Book with ID : {Id} does not exist ! ");
@@ -100,6 +111,8 @@ public class BooksController : ControllerBase
       return BadRequest(e.Message);
     }
 
+    _dbContext.SaveChanges();
+    
     return Ok(book);
   }
   
