@@ -1,4 +1,6 @@
-﻿namespace Library.Models;
+﻿using Library.Models.Genres;
+
+namespace Library.Models;
 
 public class Books : Entity
 {
@@ -10,11 +12,13 @@ public class Books : Entity
 
     public int Pages { get; set; }
 
+    public Genre Genre { get; set; }
+    
     private Books()
     {
     }
 
-    public static Books Create(string name, string author,int pages)
+    public static async Task<Books> CreateAsync(Genre genre,string name, string author,int pages)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new Exception("Name can't be empty ! ");
@@ -30,7 +34,8 @@ public class Books : Entity
             Id = Guid.NewGuid().ToString(),
             Name = name,
             Author = author,
-            Pages = pages
+            Pages = pages,
+            Genre=genre
         };
     }
 

@@ -1,4 +1,5 @@
 ﻿using Library.Models;
+using Library.Models.Genres;
 using Microsoft.EntityFrameworkCore;
 
 namespace Library.Repository;
@@ -16,4 +17,5 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<Books> BooksEnumerable { get; set; }
+    public DbSet<Genre> Genres { get; set; }
 }

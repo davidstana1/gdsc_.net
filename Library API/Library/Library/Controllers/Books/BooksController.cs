@@ -1,6 +1,8 @@
 ﻿using Library.Models;
+using Library.Models.Genres;
 using Library.Repository;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Library.Controllers;
 
@@ -17,18 +19,31 @@ public class BooksController : ControllerBase
   }
     
   [HttpGet(Name = "GetAllBooks")]
-  public ActionResult GetBooks()
+  public async Task<ActionResult<IEnumerable<BooksResponse>>> GetBooks()
   {
-    var books = _dbContext.Set<Books>().ToList();
+    var books = await _dbContext.BooksEnumerable
+      .Include(b => b.Genre).ToListAsync();
     
-    return Ok(books);
+    
+    
+    return Ok(books.Select(b => new BooksResponse
+    {
+      Id=b.Id,
+      Name=b.Name,
+      Author = b.Author,
+      Pages=b.Pages,
+      GenreId = b.Genre.Id,
+      GenreName = b.Genre.GenreName
+    }));
   }
 
   [HttpGet("{Id}")]
-  public ActionResult GetBooks(string Id)
+  public async Task<ActionResult> GetBooks(string Id)
   {
-    var book = _dbContext.BooksEnumerable.Where(booksi => booksi.Id == Id).OrderBy(booksi => booksi.Name)
-      .FirstOrDefault();
+    var book = await _dbContext.BooksEnumerable
+      .Where(books => books.Id == Id)
+      .OrderBy(book => book.Name)
+      .FirstOrDefaultAsync();
 
     if (book is null)
       return NotFound($"Book with ID : {Id} does not exist ! ");
@@ -37,13 +52,21 @@ public class BooksController : ControllerBase
   }
 
   [HttpPost]
-  public ActionResult CreateBook([FromBody] BooksRequest booksRequest)
+  public async Task<ActionResult> CreateBook([FromBody] BooksRequest booksRequest)
   {
-    Books book = null;
 
+    var bookGenre = await _dbContext.Genres
+      .FirstOrDefaultAsync(g => g.Id == booksRequest.GenreId);
+
+    Books book = null;
     try
     {
-      book = Books.Create(booksRequest.Name, booksRequest.Author, booksRequest.Pages);
+      book = await Books.CreateAsync(
+        bookGenre,
+        booksRequest.Name,
+        booksRequest.Author,
+        booksRequest.Pages
+      );
     }
     catch (Exception e)
     {
@@ -51,13 +74,21 @@ public class BooksController : ControllerBase
     }
 
     _dbContext.Add(book);
-    _dbContext.SaveChanges();
     
-    return Ok(book);
+   await _dbContext.SaveChangesAsync();
+    
+    return Ok(new BooksResponse
+    {
+      Id=book.Id,
+      Name=book.Name,
+      Author = book.Author,
+      Pages=book.Pages,
+      GenreId = bookGenre.Id
+    });
   }
 
   [HttpDelete("{Id}")]
-  public ActionResult DeleteBook(string Id)
+  public async Task<ActionResult> DeleteBook(string Id)
   {
     var book = _dbContext.BooksEnumerable.FirstOrDefault(b => b.Id == b.Id);
 
@@ -65,13 +96,13 @@ public class BooksController : ControllerBase
       return NotFound($"Book with ID : {Id} does not exist ! ");
 
     _dbContext.Remove(book);
-    _dbContext.SaveChanges();
+    _dbContext.SaveChangesAsync();
 
     return Ok($"Book with Id : {Id} was removed ! ");
   }
 
   [HttpPatch("{Id}")]
-  public ActionResult ChangeName(string Id, [FromBody] string name)
+  public async Task<ActionResult> ChangeName(string Id, [FromBody] string name)
   {
     var book = _dbContext.BooksEnumerable.FirstOrDefault(b => b.Id == Id);
     
@@ -87,13 +118,13 @@ public class BooksController : ControllerBase
       return BadRequest(e.Message);
     }
 
-    _dbContext.SaveChanges();
+    _dbContext.SaveChangesAsync();
     
     return Ok(book);
   }
 
   [HttpPut("{Id}")]
-  public ActionResult ChangeBook(string Id, [FromBody] BooksRequest booksRequest)
+  public async Task<ActionResult> ChangeBook(string Id, [FromBody] BooksRequest booksRequest)
   {
     var book = _dbContext.BooksEnumerable.FirstOrDefault(b => b.Id == Id);
     
@@ -111,7 +142,7 @@ public class BooksController : ControllerBase
       return BadRequest(e.Message);
     }
 
-    _dbContext.SaveChanges();
+    _dbContext.SaveChangesAsync();
     
     return Ok(book);
   }
