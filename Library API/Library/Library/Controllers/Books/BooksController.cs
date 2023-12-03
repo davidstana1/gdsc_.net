@@ -1,6 +1,7 @@
 ﻿using Library.Models;
 using Library.Models.Genres;
 using Library.Repository;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,57 +12,68 @@ namespace Library.Controllers;
 
 public class BooksController : ControllerBase
 {
-  private readonly AppDbContext _dbContext;
-
-  public BooksController(AppDbContext dbContext)
+  
+  private readonly IBooksRepository _booksRepository;
+  private readonly IGenreRepository _genreRepository;
+  public BooksController(IBooksRepository booksRepository,IGenreRepository genreRepository)
   {
-    _dbContext = dbContext;
+    _genreRepository = genreRepository;
+    _booksRepository = booksRepository;
   }
     
   [HttpGet(Name = "GetAllBooks")]
   public async Task<ActionResult<IEnumerable<BooksResponse>>> GetBooks()
   {
-    var books = await _dbContext.BooksEnumerable
-      .Include(b => b.Genre).ToListAsync();
+    var books = await _booksRepository.GetAllBooksWithGenreAsync();
     
-    
-    
-    return Ok(books.Select(b => new BooksResponse
+    var response= books.Select(books => new
     {
-      Id=b.Id,
-      Name=b.Name,
-      Author = b.Author,
-      Pages=b.Pages,
-      GenreId = b.Genre.Id,
-      GenreName = b.Genre.GenreName
-    }));
+      Id=books.Id,
+      Name=books.Name,
+      Author = books.Author,
+      Pages=books.Pages,
+      GenreId = books.Genre.Id,
+      GenreName = books.Genre.GenreName
+    });
+
+    return Ok(response);
   }
 
   [HttpGet("{Id}")]
   public async Task<ActionResult> GetBooks(string Id)
   {
-    var book = await _dbContext.BooksEnumerable
-      .Where(books => books.Id == Id)
-      .OrderBy(book => book.Name)
-      .FirstOrDefaultAsync();
-
+    var book = await _booksRepository.GetBookByIdAsync(Id);
+    var books = await _booksRepository.GetAllBooksWithGenreAsync();
+    
     if (book is null)
       return NotFound($"Book with ID : {Id} does not exist ! ");
+  
+    var response= new BooksResponse
+    {
+      Id=book.Id,
+      Name=book.Name,
+      Author = book.Author,
+      Pages=book.Pages,
+      GenreId = book.Genre.Id,
+      GenreName = book.Genre.GenreName
+    };
 
-    return Ok(book);
+    return Ok(response);
   }
-
+  
   [HttpPost]
   public async Task<ActionResult> CreateBook([FromBody] BooksRequest booksRequest)
   {
+    var bookGenre = await _genreRepository.GetGenreByIdAsync(booksRequest.GenreId);
 
-    var bookGenre = await _dbContext.Genres
-      .FirstOrDefaultAsync(g => g.Id == booksRequest.GenreId);
-
+    if (bookGenre is null)
+      return NotFound($"genre with id : {booksRequest.GenreId} was not found ! ");
+    
     Books book = null;
     try
     {
       book = await Books.CreateAsync(
+        _booksRepository,
         bookGenre,
         booksRequest.Name,
         booksRequest.Author,
@@ -73,9 +85,8 @@ public class BooksController : ControllerBase
       return BadRequest(e.Message);
     }
 
-    _dbContext.Add(book);
-    
-   await _dbContext.SaveChangesAsync();
+    await _booksRepository.CreateBookAsync(book);
+    await _booksRepository.SaveChangesAsync();
     
     return Ok(new BooksResponse
     {
@@ -86,29 +97,29 @@ public class BooksController : ControllerBase
       GenreId = bookGenre.Id
     });
   }
-
+  
   [HttpDelete("{Id}")]
   public async Task<ActionResult> DeleteBook(string Id)
   {
-    var book = _dbContext.BooksEnumerable.FirstOrDefault(b => b.Id == b.Id);
-
+    var book = await _booksRepository.GetBookByIdAsync(Id);
+  
     if (book is null)
       return NotFound($"Book with ID : {Id} does not exist ! ");
 
-    _dbContext.Remove(book);
-    _dbContext.SaveChangesAsync();
-
+   await _booksRepository.RemoveBookAsync(Id);
+   
+  
     return Ok($"Book with Id : {Id} was removed ! ");
   }
-
+  
   [HttpPatch("{Id}")]
   public async Task<ActionResult> ChangeName(string Id, [FromBody] string name)
   {
-    var book = _dbContext.BooksEnumerable.FirstOrDefault(b => b.Id == Id);
+    var book = await _booksRepository.GetBookByIdAsync(Id);
     
     if (book is null)
       return NotFound($"Book with ID : {Id} does not exist ! ");
-
+  
     try
     {
       book.SetName(name);
@@ -118,19 +129,20 @@ public class BooksController : ControllerBase
       return BadRequest(e.Message);
     }
 
-    _dbContext.SaveChangesAsync();
+    await _booksRepository.UpdateBookAsync(book);
     
     return Ok(book);
   }
-
+  
   [HttpPut("{Id}")]
   public async Task<ActionResult> ChangeBook(string Id, [FromBody] BooksRequest booksRequest)
   {
-    var book = _dbContext.BooksEnumerable.FirstOrDefault(b => b.Id == Id);
+    var bookTask = _booksRepository.GetBookByIdAsync(Id);
     
-    if (book is null)
+    if (bookTask is null)
       return NotFound($"Book with ID : {Id} does not exist ! ");
 
+    var book = await bookTask;
     try
     {
       book.SetName(booksRequest.Name);
@@ -142,7 +154,7 @@ public class BooksController : ControllerBase
       return BadRequest(e.Message);
     }
 
-    _dbContext.SaveChangesAsync();
+    await _booksRepository.UpdateBookAsync(book);
     
     return Ok(book);
   }

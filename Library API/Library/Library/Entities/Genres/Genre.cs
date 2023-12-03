@@ -10,4 +10,14 @@ public class Genre : Entity
     {
         GenreName = genreName;
     }
+
+    public void SetName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new Exception("Name can't be empty ! ");
+
+        name = name.Replace(" ", " ");
+        GenreName = name;
+    }
+    
 }

@@ -18,7 +18,7 @@ public class Books : Entity
     {
     }
 
-    public static async Task<Books> CreateAsync(Genre genre,string name, string author,int pages)
+    public static async Task<Books> CreateAsync(IBooksRepository _booksRepository,Genre genre,string name, string author,int pages)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new Exception("Name can't be empty ! ");

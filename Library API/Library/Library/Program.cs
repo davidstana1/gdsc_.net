@@ -1,3 +1,5 @@
+using Library.Models;
+using Library.Models.Genres;
 using Library.Repository;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,6 +14,9 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(configuartion.GetConnectionString("ConnectionString")));
+
+builder.Services.AddScoped<IBooksRepository, BooksRepository>();
+builder.Services.AddScoped<IGenreRepository, GenreRepository>();
 
 var app = builder.Build();
 
